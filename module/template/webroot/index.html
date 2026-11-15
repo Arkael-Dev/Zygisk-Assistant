@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Zygisk Assistant</title>
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--tx:#181a1f;--sub:#5b6472;--ac:#1aa260;--bd:#e3e5ea}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#1a1d24;--tx:#eef0f3;--sub:#9aa3b2;--ac:#3ddc84;--bd:#2a2e38}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px Roboto,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.w{max-width:560px;margin:auto;padding:16px}h1{font-size:20px;margin:0}.s{color:var(--sub);font-size:12px}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin:12px 0}
+.r{display:flex;justify-content:space-between;align-items:center;gap:10px}.r+.r{margin-top:12px;padding-top:12px;border-top:1px solid var(--bd)}
+.t{font-weight:600}.d{font-size:12px;color:var(--sub);margin-top:3px}
+.sw{position:relative;width:46px;height:26px;flex:none}.sw input{opacity:0;position:absolute;inset:0;z-index:1;margin:0}
+.sw i{position:absolute;inset:0;background:var(--bd);border-radius:26px;transition:.2s}
+.sw i:before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.sw input:checked+i{background:var(--ac)}.sw input:checked+i:before{transform:translateX(20px)}
+button,select,input[type=text]{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:9px 12px}
+.b{background:var(--ac);color:#fff;border:0;font-weight:600;width:100%;margin-top:8px}
+.l{max-height:240px;overflow:auto;margin-top:8px}.p{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:13px}
+.p span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+pre{font-size:11px;max-height:220px;overflow:auto;background:var(--bg);padding:8px;border-radius:8px;white-space:pre-wrap;margin:8px 0 0}
+#st{text-align:center;font-size:12px;color:var(--sub);min-height:16px}
+</style></head><body><div class="w">
+<div class="r"><div><h1>Zygisk Assistant</h1><div class="s">by snake-4 · modded by @arqzey</div></div>
+<button id="lg">EN</button></div>
+<div class="c">
+<div class="r"><div><div class="t" data-i="hr"></div><div class="d" data-i="hrd"></div></div><label class="sw"><input type="checkbox" id="hr"><i></i></label></div>
+<div class="r"><div><div class="t" data-i="sb"></div><div class="d" data-i="sbd"></div></div><label class="sw"><input type="checkbox" id="sb"><i></i></label></div>
+<div class="r"><div><div class="t" data-i="md"></div><div class="d" data-i="mdd"></div></div>
+<select id="md"><option value="global" data-i="mg"></option><option value="perapp" data-i="mp"></option></select></div>
+<button class="b" id="ap" data-i="apply"></button></div>
+<div class="c"><div class="t" data-i="apps"></div><div class="d" data-i="appsd"></div>
+<input type="text" id="q" style="width:100%;margin-top:8px"><div class="l" id="ls"></div>
+<div class="d" id="cnt"></div></div>
+<div class="c"><div class="t" data-i="live"></div><pre id="lv">-</pre></div>
+<div class="c"><div class="t" data-i="log"></div><pre id="lo">-</pre>
+<div class="r"><button id="rf" data-i="refresh" style="flex:1"></button><button id="cl" data-i="clear" style="flex:1"></button></div></div>
+<div id="st"></div></div>
+<script>
+const D="/data/adb/zygisk_assistant",CF=D+"/config.prop",AF=D+"/apps.list",M="/data/adb/modules/zygisk-assistant";
+const T={id:{hr:"Hide Root",hrd:"Samarkan prop debuggable/secure/SELinux/warranty/build tags agar terbaca device stock.",sb:"Spoof Bootloader",sbd:"Status bootloader jadi locked & verified boot green.",md:"Mode",mdd:"Global: selalu aktif. Per-app: aktif hanya saat app terpilih berjalan (eksperimental).",mg:"Global",mp:"Per-app",apply:"Simpan & Terapkan Sekarang",apps:"Pilih App",appsd:"App terpilih jadi target mode Per-app. Umount modul diatur di KSU Next Manager (App Profile).",search:"Cari package…",sel:"dipilih",live:"Status Live (nilai prop saat ini)",log:"Log",refresh:"Refresh",clear:"Hapus Log",ok:"Diterapkan. Cek log di bawah.",nob:"Bridge WebUI tidak ada. Buka lewat KernelSU/APatch/WebUI X.",saving:"Menerapkan…"},
+en:{hr:"Hide Root",hrd:"Masks debuggable/secure/SELinux/warranty/build-tags props so the device reads as stock.",sb:"Spoof Bootloader",sbd:"Reports bootloader as locked & verified boot green.",md:"Mode",mdd:"Global: always on. Per-app: on only while a selected app runs (experimental).",mg:"Global",mp:"Per-app",apply:"Save & Apply Now",apps:"Select Apps",appsd:"Selected apps are the Per-app mode targets. Module umount is set in KSU Next Manager (App Profile).",search:"Search package…",sel:"selected",live:"Live Status (current prop values)",log:"Log",refresh:"Refresh",clear:"Clear Log",ok:"Applied. See log below.",nob:"No WebUI bridge. Open via KernelSU/APatch/WebUI X.",saving:"Applying…"}};
+let L="en";try{L=localStorage.getItem("l")||((navigator.language||"").startsWith("id")?"id":"en")}catch(e){}
+const $=i=>document.getElementById(i),tr=k=>T[L][k];
+function ui(){document.querySelectorAll("[data-i]").forEach(e=>e.textContent=tr(e.dataset.i));$("q").placeholder=tr("search");$("lg").textContent=L=="id"?"EN":"ID";cnt()}
+$("lg").onclick=()=>{L=L=="id"?"en":"id";try{localStorage.setItem("l",L)}catch(e){}ui()};
+function sh(c){return new Promise((res,rej)=>{if(typeof ksu==="undefined")return rej();const n="cb"+Date.now()+Math.random().toString(36).slice(2);
+window[n]=(code,out,err)=>{delete window[n];res({code,out:out||"",err:err||""})};ksu.exec(c,"{}",n)})}
+let sel=new Set(),all=[];
+function cnt(){$("cnt").textContent=sel.size+" "+tr("sel")}
+function draw(){const f=$("q").value.toLowerCase();$("ls").innerHTML="";
+all.filter(p=>p.includes(f)).forEach(p=>{const r=document.createElement("div");r.className="p";
+r.innerHTML='<span></span><label class="sw"><input type="checkbox"><i></i></label>';r.firstChild.textContent=p;
+const k=r.querySelector("input");k.checked=sel.has(p);
+k.onchange=()=>{k.checked?sel.add(p):sel.delete(p);cnt()};$("ls").appendChild(r)})}
+$("q").oninput=draw;
+async function live(){try{const r=await sh('for p in ro.boot.verifiedbootstate ro.boot.vbmeta.device_state ro.boot.flash.locked ro.debuggable ro.secure ro.build.tags;do echo "$p=$(getprop $p)";done');$("lv").textContent=r.out}catch(e){}}
+async function logs(){try{const r=await sh("tail -n 80 "+D+"/log.txt");$("lo").textContent=r.out||"-"}catch(e){}}
+async function load(){try{
+const c=(await sh("cat "+CF)).out;const g=(k,d)=>{const m=c.match(new RegExp("^"+k+"=(.*)$","m"));return m?m[1].trim():d};
+$("hr").checked=g("HIDE_ROOT","1")=="1";$("sb").checked=g("SPOOF_BOOTLOADER","1")=="1";$("md").value=g("MODE","global");
+sel=new Set((await sh("cat "+AF)).out.split("\n").map(s=>s.trim()).filter(Boolean));
+all=(await sh("pm list packages -3|sed 's/package://'|sort")).out.split("\n").map(s=>s.trim()).filter(Boolean);
+sel.forEach(p=>{if(!all.includes(p))all.push(p)});all.sort();draw();cnt();live();logs()}catch(e){$("st").textContent=tr("nob");document.querySelectorAll("input,select,button.b").forEach(x=>x.disabled=true)}}
+$("ap").onclick=async()=>{$("st").textContent=tr("saving");try{
+const cfg=`HIDE_ROOT=${$("hr").checked?1:0}\nSPOOF_BOOTLOADER=${$("sb").checked?1:0}\nMODE=${$("md").value}\n`;
+await sh(`printf '${cfg.replace(/\n/g,"\\n")}' > ${CF}`);
+await sh(`printf '%s\\n' ${[...sel].map(p=>"'"+p.replace(/[^A-Za-z0-9._]/g,"")+"'").join(" ")||"''"} | grep -v '^$' > ${AF}; true`);
+await sh(`sh ${M}/apply.sh reload`);$("st").textContent=tr("ok")}catch(e){$("st").textContent=tr("nob")}
+setTimeout(()=>{live();logs()},1200)};
+$("rf").onclick=()=>{live();logs()};
+$("cl").onclick=async()=>{try{await sh(": > "+D+"/log.txt");logs()}catch(e){}};
+ui();load();
+</script></body></html>
