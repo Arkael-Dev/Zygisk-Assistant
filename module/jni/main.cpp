@@ -181,6 +181,7 @@ void zygisk_companion_handler(int fd)
             doUnmount();
             doRemount();
             doMrProp();
+        doHideSuBinary();
             return 0;
         }));
 

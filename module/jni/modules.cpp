@@ -6,6 +6,10 @@
 #include <unordered_map>
 #include <cstdint>
 #include <sys/mount.h>
+#include <sys/stat.h>
+#include <cstdlib>
+#include <unistd.h>
+#include <vector>
 #include <elfio/elfio.hpp>
 
 // These includes are from the system_properties submodule, not NDK!
@@ -219,4 +223,38 @@ void doMrProp()
         nullptr);
 
     LOGD("__system_property_foreach returned %d. resetCount=%d", ret, resetCount);
+}
+static const std::vector<std::string> su_paths = {
+    "/system/bin/su",
+    "/system/xbin/su",
+    "/sbin/su",
+    "/vendor/bin/su",
+    "/system/bin/.ext/.su",
+    "/system/usr/we-need-root/su-backup"};
+
+void doHideSuBinary()
+{
+    for (const auto &path : su_paths)
+    {
+        struct stat st;
+        if (stat(path.c_str(), &st) != 0)
+            continue; // Tidak ada, tidak perlu disembunyikan
+
+        char tmpl[] = "/dev/.hs_XXXXXX";
+        int fd = mkstemp(tmpl);
+        if (fd == -1)
+        {
+            LOGW("doHideSuBinary: mkstemp failed for %s: %d (%s)", path.c_str(), errno, strerror(errno));
+            continue;
+        }
+        close(fd);
+        chmod(tmpl, 0);
+
+        if (mount(tmpl, path.c_str(), NULL, MS_BIND, NULL) == 0)
+            LOGD("doHideSuBinary: hid %s", path.c_str());
+        else
+            LOGW("doHideSuBinary: mount(bind) failed for %s: %d (%s)", path.c_str(), errno, strerror(errno));
+
+        unlink(tmpl); // Aman: bind mount tetap menahan inode-nya
+    }
 }
