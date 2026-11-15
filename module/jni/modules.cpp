@@ -22,8 +22,8 @@
 
 using namespace Parsers;
 
-static const std::set<std::string> mountdir_list = {"/data/adb", "/debug_ramdisk"};
-static const std::set<std::string> fsname_list = {"KSU", "APatch", "magisk", "worker"};
+static const std::set<std::string> mountdir_list = {"/data/adb", "/debug_ramdisk", "/data/adb/modules", "/data/adb/modules_update", "/data/adb/ksu", "/data/adb/ap"};
+static const std::set<std::string> fsname_list = {"KSU", "APatch", "magisk", "worker", "KSU_SUSFS", "susfs", "magisk_merge", "ksu_merge"};
 static const std::unordered_map<std::string, int> mount_flags_procfs = {
     {"nosuid", MS_NOSUID},
     {"nodev", MS_NODEV},
