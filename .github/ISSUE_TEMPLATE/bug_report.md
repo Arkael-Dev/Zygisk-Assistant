@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-<!--- Before making a bug report, please make sure you're using the latest DEBUG build from here https://github.com/snake-4/Zygisk-Assistant/actions -->
+<!--- Before making a bug report, please make sure you're using the latest DEBUG build from here https://github.com/Arkael-Dev/Zygisk-Assistant/actions -->
 
 **Describe the bug**
 <!--- Type a clear and concise description of what the bug is below. -->

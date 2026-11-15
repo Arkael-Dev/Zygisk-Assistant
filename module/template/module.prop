@@ -2,5 +2,5 @@ id=${moduleId}
 name=${moduleName}
 version=${versionName}
 versionCode=${versionCode}
-author=snake-4 & @arqzey
+author=snake-4 & @arqzey (fork by Arkael-Dev)
 description=Hide root & bootloader spoof untuk KernelSU Next (+ZygiskNext/ReZygisk), WebUI ID/EN, per-app, log. Modded by @arqzey.
